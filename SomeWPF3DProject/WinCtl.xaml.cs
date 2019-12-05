@@ -57,7 +57,7 @@ namespace SomeWPF3DProject
         public string GetWindowTitle(IntPtr hWnd)
         {
             StringBuilder strbTitle = new StringBuilder(255);
-            int nLength = GetWindowText(hWnd, strbTitle, strbTitle.Capacity + 1);
+            GetWindowText(hWnd, strbTitle, strbTitle.Capacity + 1);
             return strbTitle.ToString();
         }
 
@@ -83,28 +83,36 @@ namespace SomeWPF3DProject
 
         public ImageSource GetWindowImage(IntPtr hWnd, FormsDraw.Rectangle bounds)
         {
-            using (FormsDraw.Bitmap result = new FormsDraw.Bitmap(bounds.Width, bounds.Height))
-            {//creates a new Bitmap which will contain the window's image
-                using (FormsDraw.Graphics MemG = FormsDraw.Graphics.FromImage(result))
-                {//makes a Graphics from the Bitmap whose HDC will hold the window's RAW image
-                    IntPtr dc = MemG.GetHdc();//gets the Bitmap's HDC 
-                    try
-                    {
-                        PrintWindow(hWnd, dc, 0);//Writes the window's image to the HDC created above
+            try
+            {
+                using (FormsDraw.Bitmap result = new FormsDraw.Bitmap(bounds.Width, bounds.Height))
+                {//creates a new Bitmap which will contain the window's image
+                    using (FormsDraw.Graphics MemG = FormsDraw.Graphics.FromImage(result))
+                    {//makes a Graphics from the Bitmap whose HDC will hold the window's RAW image
+                        IntPtr dc = MemG.GetHdc();//gets the Bitmap's HDC 
+                        try
+                        {
+                            PrintWindow(hWnd, dc, 0);//Writes the window's image to the HDC created above
+                        }
+                        finally
+                        {
+                            MemG.ReleaseHdc(dc);
+                        }
+                        var handle = result.GetHbitmap();
+                        try
+                        {
+                            return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(handle, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                        }
+                        finally { DeleteObject(handle); }
                     }
-                    finally
-                    {
-                        MemG.ReleaseHdc(dc);
-                    }
-                    var handle = result.GetHbitmap();
-                    try
-                    {
-                        return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(handle, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-                    }
-                    finally { DeleteObject(handle); }
                 }
             }
-            
+            catch { /*this try/catch block is only here to hide any function's errors :P (bad practice? where?) 
+                     It also creates an empty bitmap to avoid returning null and thus prevent the entire program from going to hell */
+                FormsDraw.Bitmap nullbmp = new FormsDraw.Bitmap(bounds.Width, bounds.Height);
+                var handle = nullbmp.GetHbitmap();
+                return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(handle, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+            }
         }
 
         public BitmapSource GetScreenImage()
