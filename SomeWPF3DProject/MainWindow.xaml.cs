@@ -88,7 +88,6 @@ namespace SomeWPF3DProject
             Int32.TryParse(tb.Text, out handle);
             if (String.IsNullOrWhiteSpace(tb.Text)){
                 hWnd = IntPtr.Zero;
-                //hWnd = GetDesktopWindow();//new System.Windows.Interop.WindowInteropHelper(this).Handle;
             }
             else
                 hWnd = (IntPtr)handle;
